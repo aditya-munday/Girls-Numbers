@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Interactive Pop-Up App</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&family=Roboto:wght@300;400&display=swap" rel="stylesheet">
+    <style>
+        /* CSS Reset and Base Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        html, body {
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            font-family: 'Roboto', sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a237e 0%, #4a148c 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            position: relative;
+        }
+        
+        /* Main container */
+        .container {
+            width: 100%;
+            height: 100%;
+            max-width: 600px;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            position: relative;
+        }
+        
+        /* Start Button Styles */
+        #startButton {
+            font-family: 'Poppins', sans-serif;
+            font-size: 2.5rem;
+            font-weight: 700;
+            padding: 25px 60px;
+            background: linear-gradient(to right, #ff4081, #f50057);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            box-shadow: 0 10px 25px rgba(245, 0, 87, 0.4);
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            position: relative;
+            z-index: 10;
+            outline: none;
+            touch-action: manipulation;
+        }
+        
+        /* Button hover and active effects */
+        #startButton:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(245, 0, 87, 0.5);
+        }
+        
+        #startButton:active {
+            transform: translateY(0);
+            box-shadow: 0 5px 15px rgba(245, 0, 87, 0.4);
+        }
+        
+        /* Disabled button state */
+        #startButton.disabled {
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+        }
+        
+        /* Trigger Image Styles - Initial Hidden State */
+        #triggerImage {
+            position: absolute;
+            width: 80%;
+            max-width: 400px;
+            height: auto;
+            border-radius: 15px;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+            opacity: 0;
+            visibility: hidden;
+            transform: scale(0.5);
+            transition: opacity 0.3s ease, visibility 0.3s ease;
+            z-index: 5;
+            object-fit: contain;
+        }
+        
+        /* Pop-up Animation Class */
+        .pop-up {
+            animation: popUpAnimation 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+            visibility: visible !important;
+        }
+        
+        /* Keyframes for the pop-up animation */
+        @keyframes popUpAnimation {
+            0% {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+            70% {
+                opacity: 1;
+                transform: scale(1.05);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        
+        /* Instruction text */
+        .instruction {
+            color: rgba(255, 255, 255, 0.8);
+            font-size: 1.2rem;
+            text-align: center;
+            margin-top: 30px;
+            max-width: 80%;
+            line-height: 1.5;
+            font-weight: 300;
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            #startButton {
+                font-size: 2rem;
+                padding: 20px 50px;
+            }
+            
+            .instruction {
+                font-size: 1rem;
+                margin-top: 20px;
+            }
+            
+            #triggerImage {
+                width: 90%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            #startButton {
+                font-size: 1.8rem;
+                padding: 18px 40px;
+                border-radius: 15px;
+            }
+            
+            .instruction {
+                font-size: 0.9rem;
+            }
+        }
+        
+        /* Animation completion message */
+        .completion-message {
+            color: #4CAF50;
+            font-size: 1.5rem;
+            font-weight: 500;
+            text-align: center;
+            margin-top: 30px;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+            position: absolute;
+            bottom: 30px;
+            width: 100%;
+        }
+        
+        .completion-message.show {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <button id="startButton">Numbers</button>
+        <img id="triggerImage" src="image.png" alt="Pop-Up Image">
+        <p class="instruction"></p>
+        <div class="completion-message"></div>
+    </div>
+
+    <script>
+        // Wait for DOM to be fully loaded
+        document.addEventListener('DOMContentLoaded', function() {
+            // Get DOM elements
+            const startButton = document.getElementById('startButton');
+            const triggerImage = document.getElementById('triggerImage');
+            const completionMessage = document.querySelector('.completion-message');
+            
+            // Check if image file exists and handle errors
+            triggerImage.onerror = function() {
+                console.warn('image.png not found in the same directory as index.html');
+                // Create a fallback image
+                const fallbackSVG = 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KICA8cmVjdCB3aWR0aD0iNDAwIiBoZWlnaHQ9IjQwMCIgZmlsbD0iIzIxOTZmMyIvPgogIDxjaXJjbGUgY3g9IjIwMCIgY3k9IjE1MCIgcj0iNTAiIGZpbGw9IiNmZmZmZmYiLz4KICA8cG9seWdvbiBwb2ludHM9IjE1MCwyMDAgMjUwLDIwMCAyMDAsMjgwIiBmaWxsPSIjZmZmZmZmIi8+CiAgPHJlY3QgeD0iMTUwIiB5PSIzMDAiIHdpZHRoPSIxMDAiIGhlaWdodD0iMjAiIGZpbGw9IiNmZmZmZmYiLz4KICA8dGV4dCB4PSIyMDAiIHk9IjM3MCIgZm9udC1mYW1pbHk9IkFyaWFsIiBmb250LXNpemU9IjI0IiBmaWxsPSIjZmZmZmZmIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIj5Qb3AtVXAhPC90ZXh0Pgo8L3N2Zz4=';
+                triggerImage.src = fallbackSVG;
+            };
+            
+            // Function to trigger the animation and sound
+            function triggerAnimation() {
+                // Disable the button immediately
+                startButton.classList.add('disabled');
+                
+                // Make the image visible and trigger the pop-up animation
+                triggerImage.classList.add('pop-up');
+                
+                // Play the sound simultaneously
+                playSound();
+                
+                // Show completion message after animation
+                setTimeout(() => {
+                    completionMessage.classList.add('show');
+                }, 800);
+            }
+            
+            // Function to play sound
+            function playSound() {
+                try {
+                    // Create audio object with the sound.mp3 file
+                    const audio = new Audio('sound.mp3');
+                    
+                    // Handle audio load error
+                    audio.onerror = function() {
+                        console.warn('sound.mp3 not found in the same directory as index.html');
+                        playFallbackTone();
+                    };
+                    
+                    // Play the audio
+                    audio.play().catch(error => {
+                        console.warn('Audio playback failed:', error);
+                        playFallbackTone();
+                    });
+                } catch (error) {
+                    console.error('Error creating audio:', error);
+                    playFallbackTone();
+                }
+            }
+            
+            // Fallback tone using Web Audio API (in case sound.mp3 doesn't exist)
+            function playFallbackTone() {
+                try {
+                    const AudioContext = window.AudioContext || window.webkitAudioContext;
+                    if (AudioContext) {
+                        const audioContext = new AudioContext();
+                        const oscillator = audioContext.createOscillator();
+                        const gainNode = audioContext.createGain();
+                        
+                        oscillator.connect(gainNode);
+                        gainNode.connect(audioContext.destination);
+                        
+                        oscillator.frequency.value = 523.25; // C5 note
+                        oscillator.type = 'sine';
+                        
+                        gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+                        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.8);
+                        
+                        oscillator.start(audioContext.currentTime);
+                        oscillator.stop(audioContext.currentTime + 0.8);
+                    }
+                } catch (e) {
+                    console.log("Fallback audio also failed:", e);
+                }
+            }
+            
+            // Add event listeners for both click and touch events
+            startButton.addEventListener('click', triggerAnimation);
+            startButton.addEventListener('touchend', function(e) {
+                e.preventDefault(); // Prevent default touch behavior
+                triggerAnimation();
+            });
+            
+            // Also handle touchstart to provide immediate feedback on mobile
+            startButton.addEventListener('touchstart', function() {
+                this.style.transform = 'translateY(0)';
+                this.style.boxShadow = '0 5px 15px rgba(245, 0, 87, 0.4)';
+            });
+            
+            // Reset button style when touch ends (if not triggered)
+            startButton.addEventListener('touchend', function(e) {
+                // Only reset if this is not the main trigger event
+                if (e.target.id === 'startButton' && !this.classList.contains('disabled')) {
+                    setTimeout(() => {
+                        if (!this.classList.contains('disabled')) {
+                            this.style.transform = '';
+                            this.style.boxShadow = '';
+                        }
+                    }, 100);
+                }
+            });
+            
+            // Handle touch cancel (when touch moves off button)
+            startButton.addEventListener('touchcancel', function() {
+                if (!this.classList.contains('disabled')) {
+                    this.style.transform = '';
+                    this.style.boxShadow = '';
+                }
+            });
+        });
+    </script>
+</body>
+</html>
